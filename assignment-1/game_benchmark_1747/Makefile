@@ -4,6 +4,8 @@
 ##
 ####################################################################################################
 
+SHELL = /bin/bash
+
 ## Compilation parameters
 
 CC = gcc
@@ -21,7 +23,6 @@ LDFLAGS := `sdl-config --libs` -lSDL_net -lm
 ## -lz is also needed when compiling with -D__COMPRESSED_MESSAGES__
 LDFLAGS_CLIENT = $(LDFLAGS) -lGL -lGLU
 LDFLAGS_SERVER = $(LDFLAGS)
-LDFLAGS_MASTER = $(LDFLAGS)
 
 ## Source and binary files
 
@@ -45,11 +46,6 @@ SERVER_SRCS_C   = $(GAME_SOURCES_C)
 SERVER_OBJS = $(patsubst $(SOURCE_DIR)/%.cpp,$(BUILD_DIR)/%.o,$(SERVER_SRCS_CPP)) \
               $(patsubst $(SOURCE_DIR)/%.c,$(BUILD_DIR)/%.o,$(SERVER_SRCS_C))
 
-## MASTER
-MASTER_DIR  = $(SOURCE_DIR)/master
-MASTER_SRCS = $(wildcard $(MASTER_DIR)/*.cpp) $(SHARED_SOURCES) $(GAME_SOURCES) $(COMM_SOURCES)
-MASTER_OBJS = $(patsubst $(SOURCE_DIR)/%.cpp,$(BUILD_DIR)/%.o,$(MASTER_SRCS))
-
 ## CLIENT
 CLIENT_DIR  = $(SOURCE_DIR)/client
 CLIENT_SRCS_CPP = $(SHARED_SOURCES) $(GRAPHICS_SOURCES) $(GAME_SOURCES_CPP) $(COMM_SOURCES) \
@@ -60,11 +56,10 @@ CLIENT_OBJS = $(patsubst $(SOURCE_DIR)/%.cpp,$(BUILD_DIR)/%.o,$(CLIENT_SRCS_CPP)
 
 SERVER_BINARY_NAME = server
 CLIENT_BINARY_NAME = client
-MASTER_BINARY_NAME = master
 
 ## Parameters for running
 
-MASTER_CONFIG_FILE = config_default.ini
+MASTER_CONFIG_FILE = config_demo.ini
 HOST_NAME := `uname -n`
 
 ####################################################################################################
@@ -73,7 +68,7 @@ HOST_NAME := `uname -n`
 ##
 ####################################################################################################
 
-all: client server 
+all: client server
 
 ## Create directories for object files
 $(BUILD_DIR):
@@ -90,7 +85,6 @@ $(BUILD_DIR):
 	@mkdir $(BUILD_DIR)/graphics/3ds
 	@mkdir $(BUILD_DIR)/graphics/texture
 	@mkdir $(BUILD_DIR)/graphics/font
-	@mkdir $(BUILD_DIR)/master
 
 ## Build client and server
 
@@ -100,20 +94,11 @@ shared: $(patsubst $(SOURCE_DIR)/%.cpp,$(BUILD_DIR)/%.o,$(SHARED_SOURCES))
 comm: $(patsubst $(SOURCE_DIR)/%.cpp,$(BUILD_DIR)/%.o,$(COMM_SOURCES))
 client_only: $(CLIENT_OBJS)
 server_only: $(SERVER_OBJS)
-master_only: $(MASTER_OBJS)
 
-#client: $(BUILD_DIR) $(CLIENT_OBJS)
-#	$(CXX) $(LDFLAGS_CLIENT) -o $(CLIENT_BINARY_NAME) $(CLIENT_OBJS)
 client: $(BUILD_DIR) $(CLIENT_OBJS)
 	$(CXX) -o $(CLIENT_BINARY_NAME) $(CLIENT_OBJS) $(LDFLAGS_CLIENT)
-#server: $(BUILD_DIR) $(SERVER_OBJS)
-#	$(CXX) $(LDFLAGS_SERVER) -o $(SERVER_BINARY_NAME) $(SERVER_OBJS)
 server: $(BUILD_DIR) $(SERVER_OBJS)
 	$(CXX) -o $(SERVER_BINARY_NAME) $(SERVER_OBJS) $(LDFLAGS_SERVER)
-#master: $(BUILD_DIR) $(MASTER_OBJS)
-#	$(CXX) $(LDFLAGS_MASTER) -o $(MASTER_BINARY_NAME) $(MASTER_OBJS)
-master: $(BUILD_DIR) $(MASTER_OBJS)
-	$(CXX) -o $(MASTER_BINARY_NAME) $(MASTER_OBJS) $(LDFLAGS_MASTER)
 
 ## Target for generic cpp files
 $(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.cpp
@@ -132,9 +117,8 @@ gamemonitor:
 .PHONY: clean
 clean:
 	-rm -f -R $(BUILD_DIR)
-	-rm -f $(SERVER_BINARY_NAME) $(CLIENT_BINARY_NAME) $(MASTER_BINARY_NAME)
+	-rm -f $(SERVER_BINARY_NAME) $(CLIENT_BINARY_NAME)
 	-rm -f core*
-	-rm -f /tmp/master.log
 clean_all: clean
 	-make -C src/gamemonitor clean
 
@@ -144,34 +128,27 @@ clean_all: clean
 ##
 ####################################################################################################
 
+PORT=3000
+
 ## run
-run_master: master
-	./$(MASTER_BINARY_NAME) $(MASTER_CONFIG_FILE) 7878 /tmp/master.log
-run_server: run_server1
-run_server1: server
-	./$(SERVER_BINARY_NAME) $(HOST_NAME):7878 $(HOST_NAME):3000
-run_server2: server
-	./$(SERVER_BINARY_NAME) $(HOST_NAME):7878 $(HOST_NAME):3001
-run_server3: server
-	./$(SERVER_BINARY_NAME) $(HOST_NAME):7878 $(HOST_NAME):3002
-run_server4: server
-	./$(SERVER_BINARY_NAME) $(HOST_NAME):7878 $(HOST_NAME):3003
+run_server:
+	./$(SERVER_BINARY_NAME) $(MASTER_CONFIG_FILE) $(PORT)
 
 run_10:
-	for (( i=1; i<=10; i++ )); do ./$(CLIENT_BINARY_NAME) $(HOST_NAME):3000 > /dev/null & echo -n $(i)" "; done
+	for (( i=1; i<=10; i++ )); do ./$(CLIENT_BINARY_NAME) $(HOST_NAME):$(PORT) > /dev/null & echo -n $$i" "; done; echo ""
 run_100:
-	for (( i=1; i<=100; i++ )); do ./$(CLIENT_BINARY_NAME) $(HOST_NAME):3000 > /dev/null & echo -n $(i)" "; done
+	for (( i=1; i<=100; i++ )); do ./$(CLIENT_BINARY_NAME) $(HOST_NAME):$(PORT) > /dev/null & echo -n $$i" "; done; echo ""
 run_200:
-	for (( i=1; i<=200; i++ )); do ./$(CLIENT_BINARY_NAME) $(HOST_NAME):3000 > /dev/null & echo -n $(i)" "; done
+	for (( i=1; i<=200; i++ )); do ./$(CLIENT_BINARY_NAME) $(HOST_NAME):$(PORT) > /dev/null & echo -n $$i" "; done; echo ""
 run_400:
-	for (( i=1; i<=400; i++ )); do ./$(CLIENT_BINARY_NAME) $(HOST_NAME):3000 > /dev/null & echo -n $(i)" "; done
+	for (( i=1; i<=400; i++ )); do ./$(CLIENT_BINARY_NAME) $(HOST_NAME):$(PORT) > /dev/null & echo -n $$i" "; done; echo ""
 run_1000:
-	for (( i=1; i<=1000; i++ )); do ./$(CLIENT_BINARY_NAME) $(HOST_NAME):3000 > /dev/null & echo -n $(i)" "; done
+	for (( i=1; i<=1000; i++ )); do ./$(CLIENT_BINARY_NAME) $(HOST_NAME):$(PORT) > /dev/null & echo -n $$i" "; done; echo ""
 
 run_client: client
-	./$(CLIENT_BINARY_NAME) $(HOST_NAME):3000
+	./$(CLIENT_BINARY_NAME) $(HOST_NAME):$(PORT)
 run_client_gui: client
-	./$(CLIENT_BINARY_NAME) --gui $(HOST_NAME):3000
+	./$(CLIENT_BINARY_NAME) --gui $(HOST_NAME):$(PORT)
 
 ## client
 ## --gui --nogui --size=640x480 --bpp=32 --fullscreen --debug-AI --disconnect_timeout=5
