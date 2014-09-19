@@ -131,18 +131,18 @@ clean_all: clean
 PORT=3000
 
 ## run
-run_server:
+run_server: server
 	./$(SERVER_BINARY_NAME) $(MASTER_CONFIG_FILE) $(PORT)
 
-run_10:
+run_10: client
 	for (( i=1; i<=10; i++ )); do ./$(CLIENT_BINARY_NAME) $(HOST_NAME):$(PORT) > /dev/null & echo -n $$i" "; done; echo ""
-run_100:
+run_100: client
 	for (( i=1; i<=100; i++ )); do ./$(CLIENT_BINARY_NAME) $(HOST_NAME):$(PORT) > /dev/null & echo -n $$i" "; done; echo ""
-run_200:
+run_200: client
 	for (( i=1; i<=200; i++ )); do ./$(CLIENT_BINARY_NAME) $(HOST_NAME):$(PORT) > /dev/null & echo -n $$i" "; done; echo ""
-run_400:
+run_400: client
 	for (( i=1; i<=400; i++ )); do ./$(CLIENT_BINARY_NAME) $(HOST_NAME):$(PORT) > /dev/null & echo -n $$i" "; done; echo ""
-run_1000:
+run_1000: client
 	for (( i=1; i<=1000; i++ )); do ./$(CLIENT_BINARY_NAME) $(HOST_NAME):$(PORT) > /dev/null & echo -n $$i" "; done; echo ""
 
 run_client: client
