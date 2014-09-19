@@ -11,7 +11,9 @@ Build:	make
 Clean:	make clean
 
 Run server:		./server <config_file> <server_port>
-Run client:		./client [--gui] <server_ip:server_port>
+
+Run client:		./client [--gui] [--debug-AI] <server_ip:server_port>
+              (See Client.cpp for other options)
 
 2. CONFIGURATION FILE
 
