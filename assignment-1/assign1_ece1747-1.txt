@@ -1,0 +1,81 @@
+ECE1747: Parallel Programming
+Assignment 1
+
+1. Introduction
+
+  Using SimMud, a massively multiplayer game simulator, implement and evaluate
+  one of the dynamic load balancing algorithms: Lightest or Spread. A
+  presentation of these algorithms can be found in Locality Aware Dynamic Load
+  Management for Massively Multiplayer Games
+  (http://www.eecg.toronto.edu/~amza/papers/f87-chen.pdf). The source code for
+  SimMud can be found at:
+
+  http://www.eecg.toronto.edu/~amza/ece1747h/homeworks/hw1/game_benchmark_1747.tgz
+
+2. SimMud
+
+  SimMud follows a client-server architecture. The map of the game is
+  represented as a matrix of cells, a cell being the smallest unit of the
+  world. There a 3 types of entities: players, game objects (resources, apples)
+  and blocks (walls). The players can perform a series of actions: move one
+  cell at a time, eat resources (apples) and attack another player. At any
+  point in time a player can only see as far as a square area around him
+  defined as his "area of interest" (CLIENT_MATRIX_SIZE). From time to time
+  players receive quests from the server. A quest is defined as a position on
+  the map, and lasts for a limited amount of time. If by the end of the quest a
+  player is near the quest's location it gets rewarded. Quests are a way of
+  reproducing flocking behaviour inside the benchmark.  The server has a
+  multithreaded design and each thread executes a 3-staged loop divided by
+  barriers. In the first stage requests coming from clients get processed and
+  the world map gets updated accordingly. This stage lasts for a fixed amount
+  of time, the "regular_update_interval". The second stage, which needs to be
+  executed by only one thread, does load balancing and quest planning. Finally,
+  in the last stage each thread sends world updates back to its clients with
+  their area of interest. These stages are implemented in
+  "src/server/WorldUpdateModule.cpp"
+
+3. Load Balancing
+
+  For the purpose of load balancing and synchronization the map is divided in a
+  grid of regions. Consequently, all the entities of the map (players,
+  resources) are associated with a region corresponding to their position. Each
+  region is assigned to a thread which is in charge with processing requests
+  coming from the clients from that region as well as sending them updates. The
+  goal of load balancing is making sure that all threads do a fairly similar
+  amount of work such that the maximum number of clients can be hosted by the
+  server.  The default load balancing algorithm is "static" which simply
+  divides the map between the threads in contiguous sequences of regions.
+
+4. Deliverables
+
+  Provide a report in which you analyze the performance of the "static" vs.
+  "dynamic" schemes in two scenarios: a) there is no active quest and the
+  players are moving more or less randomly, b) there is an active quest and as
+  a result all the players are concentrated in one area the map. Consider your
+  evaluation in terms of the moving averages of the following metrics collected
+  by each thread in every iteration:
+
+* number of client requests and the time spent processing them (make sure not
+  to include the time waiting for requests but the time spent actually
+  processing them) 
+
+* number of client updates sent to clients and the time spent sending them.
+
+
+5. Account Information
+
+In general, I recommend you work on the ug machines located in the GB 243 lab.
+They are accessible by ssh -- hostnames are ugxyz.eecg.toronto.edu (ug245 for
+instance is one of those machines). The ug machines run Debian; they are
+multicore and have plenty of RAM.
+
+Here's some info on accounts:
+http://www.eecg.toronto.edu/~exec/student_guide/ComputerResources/comp_network_accounts.shtml
+
+As I mentioned in class, you can email ecehelp@eecg.toronto for a general EECG
+account. However, the ug machines (UGSPARC on the page above) are managed
+separately Please send an email to Tim Trant at tim@eecg.toronto.edu
+regarding accounts on these machines, again mentioning your need for the
+account for the ECE 1747 class. Please copy the code I provided into your
+account and measure your code execution time on one of the ug machines.
+
