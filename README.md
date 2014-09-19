@@ -5,6 +5,7 @@ To get started:
 
 - git clone git@github.com:dfcarney/ece1747.git
 - cd ece1747
+- cp Vagrantfile.sample Vagrantfile
 - vagrant up
 - vagrant ssh
 - cd /vagrant
