@@ -1,0 +1,56 @@
+\documentclass[11pt]{report}
+\usepackage[dvips=true,bookmarks=true]{hyperref} % ... only needed for PDF generation
+\usepackage{fancyhdr}
+\usepackage{fullpage}
+\pagenumbering{gobble}
+\pagestyle{fancy}
+\rfoot{David Carney (ID: 998752005)}
+\lfoot{ECE 1774}
+
+\usepackage[margin=0.80in]{geometry}
+
+%\chead{}
+%\lhead{ECE 1774}
+%\rhead{Page \thepage}
+
+%\lfoot{}
+%\cfoot{}
+%\rfoot{}
+
+%\renewcommand{\headrulewidth}{0.4pt}
+%\renewcommand{\footrulewidth}{0.4pt}
+
+\begin{document}
+
+\noindent\textbf{Locality Aware Dynamic Load Management for Massively Multiplayer Games}\newline
+J. Chen, B. Wu, M. Delap, B. Knutsson, H.Lu, C. Amza
+\newline
+\noindent\textbf{Summarized By:} David Carney (ID: 998752005) [Sept 22, 2014]\newline
+
+This paper explores ``dynamic load management through adaptive region to server
+remapping'' of (massive) multiplayer games. In particular, it evaluates load
+shedding and aggregation solutions in light of two competing goals: {\textit
+balancing server load} in light of dynamic player positions; and {\textit
+decreasing inter-server communication}. While dynamic load management is not
+new, exploring the problem as applied to multiplayer games is, especially
+in WAN environments. The paper presents and evaluates several algorithms,
+backed by experimental and simulated results.
+\newline
+\newline
+\noindent Strengths of the paper include:
+\begin{itemize}
+\item Generally concise, well-written, and unambiguous.
+\item Comparison of LAN and WAN results offers good insights.
+\item Comparison and analysis of various partitioning algorithms is straightforward and enlightening.
+\end{itemize}
+
+\noindent Weaknesses of the paper include:
+\begin{itemize}
+\item Simulation methodology is perhaps too simplistic and fails to address issues/problems characteristic of larger computer networks.
+\item Makes various unstanted, but important assumptions (ex. players do not cheat, players do not collide). Such assumptions are invalid in commercial games.
+\item Paper does not thoroughly discuss the real-time (i.e. instantanous and short-term) effects of region remapping on end-user experience.
+\item The regions themselves are fixed-size, which does not fully alleviate problems related to flocking. Some discussion of dynamic region resizing would have been nice.
+\end{itemize}
+
+\end{document}
+
