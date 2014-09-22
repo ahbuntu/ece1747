@@ -22,7 +22,7 @@ sudo apt-get install build-essential git-core libsdl1.2-dev libsdl-net1.2-dev li
 # for LaTeX; this is a *big* install
 sudo apt-get install texlive-full --yes
 
-cd assignment-1/game\_benchmark\_1747
+cd assignment-1/game_benchmark_1747
 
 make
 ```
