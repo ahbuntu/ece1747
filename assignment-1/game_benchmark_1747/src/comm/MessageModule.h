@@ -61,8 +61,4 @@ private:
 	int check_send_ready();
 };
 
-
-
-
-
 #endif /*MESSAGEMODULE_H_*/

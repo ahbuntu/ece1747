@@ -40,8 +40,15 @@ int module_thread(void *data)
 {
 	Module *module = (Module*)data;
 
-	try{							module->run();							} 
-	catch( const char *err ){		printf("[ERROR] %s\n", err);exit(-1);	}
+	try
+	{
+		module->run();
+	} 
+	catch( const char *err )
+	{
+		printf("[ERROR] %s\n", err);
+		exit(-1);	
+	}
 
 	return 0;
 }
@@ -55,26 +62,35 @@ int module_thread(void *data)
 void init(int argc, char *argv[])
 {
 	/* interpret command line arguments */
-	if ( argc < 3 )		throw "Usage: server <config_file> <port> [<log_file>]";
-	
+	if ( argc < 3 ) 
+	{
+		throw "Usage: server <config_file> <port> [<log_file>]";
+	}
 	
 	/* local port */
 	sscanf( argv[2], "%d", &local_port);
-	if ( local_port < 1 )			throw "The port must be an integer larger than 0";
+	if ( local_port < 1 )
+	{ 
+		throw "The port must be an integer larger than 0";
+	}
 	printf( "Starting server on port %d\n", local_port );
 	
-	    
-    srand( (unsigned int)time(NULL) );
-    /*
+  srand( (unsigned int)time(NULL) );
+  /*
 	if ( SDL_Init( SDL_INIT_TIMER | SDL_INIT_NOPARACHUTE ) < 0 ) // |SDL_INIT_VIDEO
 	{
 		printf("Could not initialize SDL: %s.\n", SDL_GetError());
 		throw "Failed to initialize SDL (SDL_Init)";
 	}*/
-	if ( SDLNet_Init() < 0 )		throw "Failed to initialize SDL_net (SDLNet_Init)";
+	if ( SDLNet_Init() < 0 ) 
+	{
+		throw "Failed to initialize SDL_net (SDLNet_Init)";
+	}
 
 	/* initialize server data */
-	sd = new ServerData( argv[1] );	assert( sd );
+	sd = new ServerData( argv[1] );	
+	assert( sd );
+
 	sd->log_file = ( argc >= 4 ) ? argv[3] : NULL;
 	sd->wm.generate();
 }
@@ -101,37 +117,48 @@ int main(int argc, char *argv[])
     
 	try
 	{
-		#ifdef __COMPRESSED_MESSAGES__
+#ifdef __COMPRESSED_MESSAGES__
 		printf("Starting server with compressed messages\n");
-		#endif
+#endif
 
 		/* initialize */
 		init(argc, argv);
 		printf("Number of Threads @ main: %d\n",  sd->num_threads);
         
 		/* create server modules */
-       	MessageModule *comm_module = new MessageModule( local_port, sd->num_threads, 0 );	assert( comm_module );
+    MessageModule *comm_module = new MessageModule( local_port, sd->num_threads, 0 );	
+    assert( comm_module );
 		
-		//* WorldUpdateModule
-        SDL_barrier *wu_barrier = SDL_CreateBarrier( sd->num_threads );						assert( wu_barrier ); 
-		WorldUpdateModule **wu_module = new WorldUpdateModule*[ sd->num_threads ];			assert( wu_module );			
+		/* WorldUpdateModule */
+    SDL_barrier *wu_barrier = SDL_CreateBarrier( sd->num_threads );	
+    assert( wu_barrier ); 
+
+		WorldUpdateModule **wu_module = new WorldUpdateModule*[ sd->num_threads ]; 
+		assert( wu_module );
+
 		for ( i = 0; i < sd->num_threads; i++ )
 		{
-			wu_module[i] = new WorldUpdateModule( i, comm_module, wu_barrier );				assert( wu_module[i] );
+			wu_module[i] = new WorldUpdateModule( i, comm_module, wu_barrier );
+			assert( wu_module[i] );
 		}
 		
 		
 		//* User input loop (type 'quit' to exit)
-		char cmd[256]; 
+		char cmd[256];
+		printf("Type \"quit\" to exit.\n");
 		while ( true )
 		{			
 			scanf("%s", cmd);
-			if ( !strcmp(cmd, "exit") || !strcmp(cmd, "quit") || !strcmp(cmd, "q") )	exit(0);
+			if ( !strcmp(cmd, "exit") || !strcmp(cmd, "quit") || !strcmp(cmd, "q") )
+			{
+				exit(0);
+			}
 		}		
 
 		finish();
-
-	} catch ( const char *err ) {
+	} 
+	catch ( const char *err ) 
+	{
 		printf("[ERROR] %s\n", err);
 		exit(-1);
 	}

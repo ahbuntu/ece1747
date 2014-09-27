@@ -33,7 +33,7 @@ protected:
 	int t_id;
 	SDL_barrier *barrier;
 	
-	MessageModule* comm;
+	MessageModule *comm;
 	
 public:
 	double avg_wui;			// average_world_update_interval

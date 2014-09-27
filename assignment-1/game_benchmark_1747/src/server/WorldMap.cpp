@@ -1,7 +1,5 @@
 #include "ServerData.h"
-
 #include "WorldMap.h"
-
 
 void WorldMap::generate()
 {
@@ -13,7 +11,10 @@ void WorldMap::generate()
 	for ( i = 0; i < size.x; i++ )
 	{
 		terrain[i] = new char[size.y];
-		for ( j = 0; j < size.y; j++ )	terrain[i][j] = ( rand() % 1000 < blocks ) ? 1 : 0;
+		for ( j = 0; j < size.y; j++ )
+		{
+			terrain[i][j] = ( rand() % 1000 < blocks ) ? 1 : 0;
+		}
 	}
 
 	players = new PlayerBucket[ sd->num_threads ];
@@ -30,7 +31,9 @@ void WorldMap::generate()
 	{
 		regions[i] = new Region[ n_regs.y ];
 		for( j = 0, pos.y = 0; j < n_regs.y; j++, pos.y += regmin.y )
+		{
 			initRegion( &regions[i][j], pos, regmin, (i*n_regs.y + j)/regions_per_thread, objs, pls);
+		}
 	}
 
 	/* generate objects */
@@ -40,12 +43,22 @@ void WorldMap::generate()
 	for ( i = 0; i < resources * size.x * size.y / 1000; i++ )
 	{
 		o = new GameObject();			
-        while(1){
+    while(1)
+    {
 			o->pos.x = rand() % size.x;
 			o->pos.y = rand() % size.y;
-			if( terrain[o->pos.x][o->pos.y] != 0  )				continue;
-			r = getRegionByLocation( o->pos );					assert(r);
-			if( Region_addObject( r, o, min_res, max_res ) )	break;
+			if( terrain[o->pos.x][o->pos.y] != 0  )
+			{
+				continue;
+			}
+
+			r = getRegionByLocation( o->pos );
+			assert(r);
+
+			if( Region_addObject( r, o, min_res, max_res ) )
+			{
+				break;
+			}
 		}
 	}
 }
@@ -66,12 +79,22 @@ Player* WorldMap::addPlayer( IPaddress a )
 	
 	Region* r = NULL;
 	
-	while(1){
+	while(1)
+	{
 		p->pos.x = rand() % size.x;
 		p->pos.y = rand() % size.y;
-		if( terrain[p->pos.x][p->pos.y] != 0  )		continue;		
-		r = getRegionByLocation( p->pos );			assert(r);
-		if( Region_addPlayer(r, p) )				break;		
+		if( terrain[p->pos.x][p->pos.y] != 0  )
+		{
+			continue;
+		}
+		
+		r = getRegionByLocation( p->pos );
+		assert(r);
+
+		if( Region_addPlayer(r, p) )
+		{
+			break;
+		}
 	}
 
 	players[ r->layout ].insert(p);
@@ -86,7 +109,10 @@ Player* WorldMap::findPlayer( IPaddress a, int t_id )
 	for( i = 0; i < sd->num_threads; i++ )
 	{
 		p = players[ (t_id+i) % sd->num_threads ].find( a );		
-		if( p )	break;
+		if( p )
+		{
+			break;
+		}
 	}
 	return p;
 }
@@ -107,11 +133,17 @@ void WorldMap::movePlayer(Player* p)
 	if( p->dir == 3 )	n_pos.x = p->pos.x - 1;		// LEFT
 	
 	/* the player is on the edge of the map */
-	if ( n_pos.x < 0 || n_pos.x >= size.x || n_pos.y < 0 || n_pos.y >= size.y )	return;
+	if ( n_pos.x < 0 || n_pos.x >= size.x || n_pos.y < 0 || n_pos.y >= size.y )	
+	{
+		return;
+	}
+
 	/* client tries to move to a blocked area */
-	if ( terrain[ n_pos.x ][ n_pos.y ] != 0 )									return;
-	
-	
+	if ( terrain[ n_pos.x ][ n_pos.y ] != 0 )
+	{
+		return;
+	}
+
 	/* get old and new region */
 	Region *r_old = getRegionByLocation( p->pos );
 	Region *r_new = getRegionByLocation( n_pos );
@@ -129,13 +161,18 @@ void WorldMap::movePlayer(Player* p)
 void WorldMap::useGameObject(Player* p)
 {
 	assert(p);
-	Region*		r = getRegionByLocation( p->pos );	assert( r );	
+	Region*		r = getRegionByLocation( p->pos );
+	assert( r );	
+
 	GameObject*	o = Region_getObject( r, p->pos );
 	
 	// Fix for UDP out of order bug
 	if ( o )
 	{
-		if ( o->quantity > 0 )		p->useObject(o);
+		if ( o->quantity > 0 )
+		{
+			p->useObject(o);
+		}
 	}
 }
 
@@ -150,14 +187,24 @@ void WorldMap::attackPlayer(Player* p, int attack_dir)
 	if( attack_dir == 3 )	pos2.x = p->pos.x - 1;		// LEFT
 
 	/* check if coordinates are inside the map  */
-	if( pos2.x < 0 || pos2.x >= size.x || pos2.y < 0 || pos2.y >= size.y ) return;
+	if( pos2.x < 0 || pos2.x >= size.x || pos2.y < 0 || pos2.y >= size.y ) {
+		return;
+	}
 
 	/* get second player */
-	Region* r  = getRegionByLocation( pos2 ); assert( r );
-	Player* p2 = Region_getPlayer( r, pos2 );
-	if ( p2 != NULL )		p->attackPlayer( p2 );
+	Region* r  = getRegionByLocation( pos2 ); 
+	assert( r );
 
-	if ( sd->display_actions )		printf("Player %s attacks %s\n", p->name, p2->name);
+	Player* p2 = Region_getPlayer( r, pos2 );
+	if ( p2 != NULL )
+	{
+		p->attackPlayer( p2 );
+	}
+
+	if ( sd->display_actions )
+	{	
+		printf("Player %s attacks %s\n", p->name, p2->name);
+	}
 }
 
 void packRegion( Region* r, Serializator* s, Player* p, Vector2D pos1, Vector2D pos2 )
@@ -277,18 +324,31 @@ void WorldMap::balance_spread()
 void WorldMap::balance()
 {
 	Uint32 now = SDL_GetTicks();
-	if ( now - last_balance < sd->load_balance_limit )	return;
+	if ( now - last_balance < sd->load_balance_limit ) {
+		return;
+	}
+
 	last_balance = now;
 	
-	if( !strcmp( sd->algorithm_name, "static" ) )		return;
+	if( !strcmp( sd->algorithm_name, "static" ) ) {
+		return;
+	}
 	
 	n_players = 0;
-	for( int i = 0; i < sd->num_threads; i++ )			n_players += players[i].size();
-	if( n_players == 0 )								return;
+	for( int i = 0; i < sd->num_threads; i++ ) {
+		n_players += players[i].size();
+	}
+
+	if( n_players == 0 ) {
+		return;
+	}
 	
-	if( !strcmp( sd->algorithm_name, "lightest" ) )		return balance_lightest();
-	if( !strcmp( sd->algorithm_name, "spread" ) )		return balance_spread();
-	
+	if( !strcmp( sd->algorithm_name, "lightest" ) ) {
+		return balance_lightest();
+	} else if( !strcmp( sd->algorithm_name, "spread" ) ) {
+		return balance_spread();
+	}
+
 	printf("Algorithm %s is not implemented.\n", sd->algorithm_name);
 	return;
 }
