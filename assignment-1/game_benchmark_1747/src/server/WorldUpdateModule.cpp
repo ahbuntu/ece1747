@@ -70,6 +70,13 @@ void WorldUpdateModule::run()
 	/* main loop */
 	while ( true )
 	{
+
+    /*
+      PHASE 1:
+       - collect updates from clients on all threads
+       - use a timeout on each thread
+     */
+
 		start_time = SDL_GetTicks();
 		timeout	= sd->regular_update_interval;
 		
@@ -122,6 +129,11 @@ void WorldUpdateModule::run()
     
     SDL_WaitBarrier(barrier);
         
+    /* 
+      PHASE 2:
+       - synchronize with a barrier and proceed with world updates on a single thread
+     */
+
     if( t_id == 0 )
     {
     	sd->wm.balance(); // Balance the WorldMap
@@ -159,9 +171,9 @@ void WorldUpdateModule::run()
         
     SDL_WaitBarrier(barrier);
     
-    /* 
-      PHASE 3: 
-        - publish the updates using multiple threads
+    /*
+      PHASE 3:
+      - publish the updates using multiple threads
     */ 
 
     wui = SDL_GetTicks() - start_time;
