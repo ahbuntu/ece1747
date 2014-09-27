@@ -19,6 +19,8 @@
 #include "ServerData.h"
 #include "WorldUpdateModule.h"
 
+#define kUpdateIntervalOutputFrequency 100
+
 /***************************************************************************************************
 *
 * Constructors and setup methods
@@ -66,6 +68,8 @@ void WorldUpdateModule::run()
   Uint32 end_quest   = start_quest + sd->quest_min + rand() % (sd->quest_max-sd->quest_min+1);
     	
 	printf("WorldUpdateModule started\n");
+
+  int loop_count = 0;
 
 	/* main loop */
 	while ( true )
@@ -176,9 +180,13 @@ void WorldUpdateModule::run()
       - publish the updates using multiple threads
     */ 
 
-    wui = SDL_GetTicks() - start_time;
-    avg_wui = ( avg_wui < 0 ) ? wui : ( avg_wui * 0.95 + (double)wui * 0.05 );        
-    start_time = SDL_GetTicks();
+    if (t_id == 0) 
+    {
+      // only bother calculating this on the main thread
+      wui = SDL_GetTicks() - start_time;
+      avg_wui = ( avg_wui < 0 ) ? wui : ( avg_wui * 0.95 + (double)wui * 0.05 );        
+      start_time = SDL_GetTicks();
+    }
         
 		/* send updates to clients (map state) */
     bucket->start();
@@ -207,8 +215,20 @@ void WorldUpdateModule::run()
     }
 
     SDL_WaitBarrier(barrier);
-    rui = SDL_GetTicks() - start_time;    
-    avg_rui = ( avg_rui < 0 ) ? rui : ( avg_rui * 0.95 + (double)rui * 0.05 );	    
+
+    if (t_id == 0) 
+    {
+      // only bother calculating this on the main thread
+      rui = SDL_GetTicks() - start_time;
+      avg_rui = ( avg_rui < 0 ) ? rui : ( avg_rui * 0.95 + (double)rui * 0.05 );
+
+      // Output the metrics
+      if((++loop_count % kUpdateIntervalOutputFrequency) == 0)
+      {
+        loop_count = 0;
+        printf("avg_wui: %f, avg_rui: %f\n", avg_wui, avg_rui);
+      }
+    }
 	}
 }
 
