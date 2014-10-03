@@ -346,9 +346,39 @@ algorithm prioritizes region locality.
 */
 void WorldMap::balance_lightest()
 {
-	// identify overloaded server
-	// identify lightest node (load < Light_load_th)
 
+	//Definitions:
+	//Overload threshold = server/thread load in number of clients for which SLA is violated
+	//SLA violation = server/thread exceeds predefined update interval for 90% of its clients
+	//Safe load threshold = highest load (# of clients) for which the SLA is met for ALL clients
+	//Light load threshold = 2*safety_th - overload_th
+	//Thread in overload = #clients in thread > overload_th
+
+
+	//To Do:
+	// 1. compute overload threshold for each thread
+	// 2. compute safe load threshold for each thread
+	// 3. determine if thread is in overload (implement isOverloaded() defined in header)
+	// 4. identify lightest node/thread (load < Light_load_th)	
+	// 5. identify regions to be reassigned 
+	// 6. reassign overloaded region(s) to lightest thread (reassignRegion() already implemented)
+	
+	
+	//Example Scenario:
+	//T1 = 20 clients
+	//T2 = 50 clients
+	//T3 = 30 clients
+	//T4 = 10 clients
+	//SLA = all clients receive updates in 50 ms
+	//T1: 17 clients receive updates > 50 ms => 17/20 (85% clients have SLA violations)
+	//T2: 47 clients receive updates > 50 ms => 47/50 (94% clients have SLA violations)
+	//T3: 5 clients receive updates > 50 ms  => 5/30 (17% clients have SLA violations)
+	//T4: 0 clients receive updates > 50 ms 
+	
+	//Open Questions for the previous example:
+	//Q1 - how do we calculate the overlod threshold for each thread?
+	//Q2 - which threads are in overload?
+	//Q3 - how do we calculate the safe load threshold for each thread?
 }
 
 /* 
