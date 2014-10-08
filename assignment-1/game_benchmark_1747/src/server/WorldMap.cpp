@@ -346,39 +346,167 @@ algorithm prioritizes region locality.
 */
 void WorldMap::balance_lightest()
 {
+	
+	//safety load is target load after load shedding
+	double safety_level = (sd->light_level + sd->overloaded_level)/2;
+	
+	//creates a list of overloaded and lightly loaded threads
+	list<int> list_overload_t;
+	list<int> list_light_t;
+	
+	for (int i = 0; i < sd->num_threads; i++) 
+	{
+		if (isOverloaded(players[i].size())) 
+		{
+			list_overload_t.push_back(i);
+		} else if (isLightlyloaded(players[i].size())) 
+		{
+			list_light_t.push_back(i);
+		} else 
+		{
+			//threads that are neither overloaded nor lightly loaded
+		}
+	}
 
-	//Definitions:
-	//Overload threshold = server/thread load in number of clients for which SLA is violated
-	//SLA violation = server/thread exceeds predefined update interval for 90% of its clients
-	//Safe load threshold = highest load (# of clients) for which the SLA is met for ALL clients
-	//Light load threshold = 2*safety_th - overload_th
-	//Thread in overload = #clients in thread > overload_th
+	// printf("Overloaded list:\n"); //DEBUG
+	// 	printListInt(list_overload_t); //DEBUG
+	// 	
+	// 	printf("Lightlyloaded list:\n"); //DEBUG
+	// 	printListInt(list_light_t); //DEBUG
+	
 
-
-	//To Do:
-	// 1. compute overload threshold for each thread
-	// 2. compute safe load threshold for each thread
-	// 3. determine if thread is in overload (implement isOverloaded() defined in header)
-	// 4. identify lightest node/thread (load < Light_load_th)	
-	// 5. identify regions to be reassigned 
-	// 6. reassign overloaded region(s) to lightest thread (reassignRegion() already implemented)
+	int heavy_t;
+	if (list_overload_t.size() == 0) 
+	{
+		return; //no balancing required
+	} else 
+	{
+		//find the heaviest thread
+		heavy_t = findHeaviest(list_overload_t);				
+	}
 	
 	
-	//Example Scenario:
-	//T1 = 20 clients
-	//T2 = 50 clients
-	//T3 = 30 clients
-	//T4 = 10 clients
-	//SLA = all clients receive updates in 50 ms
-	//T1: 17 clients receive updates > 50 ms => 17/20 (85% clients have SLA violations)
-	//T2: 47 clients receive updates > 50 ms => 47/50 (94% clients have SLA violations)
-	//T3: 5 clients receive updates > 50 ms  => 5/30 (17% clients have SLA violations)
-	//T4: 0 clients receive updates > 50 ms 
+	int light_t;
+	if (list_light_t.size() == 0) 
+	{
+		return; //lightest balancing doesn't speciy approach
+	} else 
+	{
+		//find the lightest thread
+		 light_t = findLightest(list_light_t);				
+	}
 	
-	//Open Questions for the previous example:
-	//Q1 - how do we calculate the overlod threshold for each thread?
-	//Q2 - which threads are in overload?
-	//Q3 - how do we calculate the safe load threshold for each thread?
+	printf("Heaviest thread id: %d\n", heavy_t); //DEBUG
+	printf("Lghtest thread id: %d\n", light_t); //DEBUG
+	
+
+	list<Region*> heavyBin;
+	Region* testR;
+
+	//place all the regions of the heaviest thread in a bin
+	for(int i = 0; i < n_regs.x; i++)
+	{
+		for (int j = 0; j < n_regs.y; j++)
+		{
+			testR = &regions[i][j];
+			printf("Region @ %d, %d : thread %d & %d clients \n", i, j, testR->layout, testR->n_pls); //DEBUG
+			if (testR->layout == heavy_t) {
+				heavyBin.push_back(testR);
+			}
+		}
+	}
+		
+	int reassignSize = 0;
+	int room = safety_level - players[light_t].size();
+	list<Region*> reassignBin;
+	printf("Heavy bin\n"); //DEBUG
+	for (list<Region*>::iterator it=heavyBin.begin(); it != heavyBin.end(); ++it) {
+		//try to keep regions within a thread together, but not being super thorough here
+		//different permutations of the region size need to be considered
+		if ((reassignSize + (*it)->n_pls) <= room) 
+		{
+			reassignSize += (*it)->n_pls;
+			reassignBin.push_back(*it);
+		}
+		if (reassignSize >= room) 
+		{
+			break;
+		}
+		printf("Region : thread %d & %d clients \n", (*it)->layout, (*it)->n_pls); //DEBUG
+	}
+	
+	for (list<Region*>::iterator it=reassignBin.begin(); it != reassignBin.end(); ++it) {
+		printf("Doing reassignment\n"); //DEBUG
+		reassignRegion(*it, light_t);
+	}
+	
+	//the whole next loop is a DEBUG statement
+	//shows the region + thread + player counts after the reassignment 
+	for(int i = 0; i < n_regs.x; i++) 
+	{
+		for (int j = 0; j < n_regs.y; j++)
+		{
+			testR = &regions[i][j];
+			printf("Region @ %d, %d : thread %d & %d clients \n", i, j, testR->layout, testR->n_pls); 
+		}
+	}
+	
+
+}
+
+int WorldMap::findHeaviest(list<int> heaviestList) 
+{
+	int max = -1;
+	int t;
+	for (list<int>::iterator it=heaviestList.begin(); it != heaviestList.end(); ++it) {
+		if (players[(*it)].size() > max) {
+			max = players[(*it)].size();
+			t = *it;
+		}
+	}
+	return t;
+}
+
+int WorldMap::findLightest(list<int> lightestList) 
+{
+	int min = 99999999;
+	int t;
+	for (list<int>::iterator it=lightestList.begin(); it != lightestList.end(); ++it) {
+		if (players[(*it)].size() < min) {
+			min = players[(*it)].size();
+			t = *it;
+		}
+	}
+	return t;
+}
+
+void WorldMap::printListInt(list<int> mylist) 
+{
+	for (list<int>::iterator it=mylist.begin(); it != mylist.end(); ++it) 
+	{
+		printf("%d :", *it);
+		printf("%d clients\n", players[*it].size());
+	}
+	
+}
+//assumes that n_pl is the number of players handled by a specific thread
+bool WorldMap::isOverloaded(int n_pl)
+{
+	if (n_pl > sd->overloaded_level)
+	{
+		return true;
+	}
+	return false;
+}
+
+//assumes that n_pl is the number of players handled by a specific thread
+bool WorldMap::isLightlyloaded(int n_pl)
+{
+	if (n_pl <= sd->light_level)
+	{
+		return true;
+	}
+	return false;
 }
 
 /* 
@@ -413,6 +541,12 @@ void WorldMap::balance_spread()
 
 void WorldMap::balance()
 {
+	// Region* testR;
+	// 	testR = &regions[0][0];
+	// 	printf("Region at 0,0 has t_id: %d\n", testR->layout);
+	// 	reassignRegion(testR, 3);
+	// 	printf("Region at 0,0 has t_id: %d\n", testR->layout);
+	
 	Uint32 now = SDL_GetTicks();
 	if ( now - last_balance < sd->load_balance_limit ) {
 		return;

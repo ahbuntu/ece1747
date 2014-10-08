@@ -7,6 +7,8 @@
 #include "PlayerBucket.h"
 #include "../game/Region.h"
 
+#include <string>
+#include <algorithm>
 class WorldMap
 {
 public:
@@ -47,8 +49,12 @@ public:
     void balance();
     void balance_lightest();
     void balance_spread();
-
+	
+	void printListInt(list<int> mylist) ;
+	bool isLightlyloaded(int n_pl);
     bool isOverloaded( int n_pl );
+	int findHeaviest(list<int> heaviestList);
+	int findLightest(list<int> lightestList);
     void reassignRegion( Region* r, int new_layout );
     
     void regenerateObjects();

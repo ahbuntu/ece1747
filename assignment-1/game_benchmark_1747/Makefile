@@ -59,7 +59,7 @@ CLIENT_BINARY_NAME = client
 
 ## Parameters for running
 
-MASTER_CONFIG_FILE = config_demo.ini
+MASTER_CONFIG_FILE = config_lightest.ini
 HOST_NAME := `uname -n`
 
 ####################################################################################################
